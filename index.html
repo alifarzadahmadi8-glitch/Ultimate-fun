@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Imposter Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+            background: rgba(16, 20, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .screen.active {
+            display: block;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #00ff9d;
+            text-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(45deg, #00ff9d, #00b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 40px;
+        }
+
+        .setup-options {
+            display: grid;
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        .option-group {
+            background: linear-gradient(145deg, rgba(30, 35, 60, 0.8), rgba(20, 25, 50, 0.8));
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 157, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #00ff9d;
+            font-size: 1.1rem;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #00ff9d;
+            border-radius: 10px;
+            background: rgba(10, 15, 40, 0.9);
+            color: white;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #00b8ff;
+            box-shadow: 0 0 15px rgba(0, 184, 255, 0.5);
+        }
+
+        select option {
+            background: #1a1f3d;
+            color: white;
+            padding: 10px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 18px 35px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        button:hover::after {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #00ff9d, #00b8ff);
+            color: #000;
+            box-shadow: 0 5px 15px rgba(0, 255, 157, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 255, 157, 0.5);
+        }
+
+        .reveal-content {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .player-title {
+            font-size: 32px;
+            color: #00ff9d;
+            margin-bottom: 40px;
+            text-shadow: 0 0 20px rgba(0, 255, 157, 0.7);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 25px auto;
+            animation: pulse 2s infinite;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            width: 85%;
+            max-width: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .crewmate {
+            background: linear-gradient(45deg, #2196F3, #21CBF3, #2196F3);
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+            box-shadow: 0 0 25px rgba(33, 150, 243, 0.6);
+            border: 2px solid rgba(33, 150, 243, 0.8);
+        }
+
+        .imposter {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b, #ff416c);
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+            box-shadow: 0 0 25px rgba(255, 65, 108, 0.6);
+            border: 2px solid rgba(255, 65, 108, 0.8);
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(33, 150, 243, 0.6); }
+            50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(33, 150, 243, 0.8); }
+        }
+
+        .word-display {
+            font-size: 56px;
+            font-weight: 800;
+            margin: 40px 0;
+            color: #ffffff;
+            text-shadow: 0 0 30px rgba(0, 255, 157, 0.8);
+            min-height: 80px;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            border: 3px solid #00ff9d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .word-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 157, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .hint-box {
+            font-size: 20px;
+            color: #ffffff;
+            margin: 40px 0;
+            padding: 25px;
+            background: linear-gradient(145deg, rgba(30, 35, 60, 0.8), rgba(20, 25, 50, 0.8));
+            border-radius: 15px;
+            border-left: 5px solid #00ff9d;
+            text-align: left;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .hint-box h3 {
+            color: #00ff9d;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 24px;
+        }
+
+        .image-container {
+            width: 280px;
+            height: 280px;
+            margin: 40px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, rgba(30, 35, 60, 0.8), rgba(20, 25, 50, 0.8));
+            border: 4px solid #00ff9d;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .image-container:hover img {
+            transform: scale(1.1);
+        }
+
+        .no-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #888;
+            height: 100%;
+            width: 100%;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .no-image .icon {
+            font-size: 48px;
+        }
+
+        .handover-screen {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .handover-text {
+            font-size: 56px;
+            margin-bottom: 50px;
+            color: #00ff9d;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { 
+                text-shadow: 0 0 20px #00ff9d, 0 0 30px #00ff9d; 
+                transform: scale(1);
+            }
+            to { 
+                text-shadow: 0 0 30px #00ff9d, 0 0 40px #00ff9d, 0 0 50px #00ff9d; 
+                transform: scale(1.05);
+            }
+        }
+
+        .countdown {
+            font-size: 90px;
+            color: #ff6b6b;
+            margin: 40px 0;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 0 0 30px rgba(255, 107, 107, 0.8);
+            font-family: 'Courier New', monospace;
+        }
+
+        .instructions {
+            margin-top: 50px;
+            padding: 30px;
+            background: linear-gradient(145deg, rgba(30, 35, 60, 0.8), rgba(20, 25, 50, 0.8));
+            border-radius: 20px;
+            border: 2px solid #00ff9d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .instructions h3 {
+            color: #00ff9d;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 26px;
+        }
+
+        .instructions ul {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+
+        .instructions li {
+            margin: 15px 0;
+            line-height: 1.6;
+            font-size: 18px;
+        }
+
+        .game-mode {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(145deg, rgba(30, 35, 60, 0.8), rgba(20, 25, 50, 0.8));
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mode-btn.active {
+            border-color: #00ff9d;
+            background: linear-gradient(145deg, rgba(0, 255, 157, 0.2), rgba(0, 184, 255, 0.2));
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .mode-btn:hover:not(.active) {
+            transform: translateY(-3px);
+            background: linear-gradient(145deg, rgba(0, 255, 157, 0.1), rgba(0, 184, 255, 0.1));
+        }
+
+        .imposter-hint {
+            background: linear-gradient(145deg, rgba(255, 65, 108, 0.2), rgba(255, 75, 43, 0.2));
+            border: 2px solid #ff416c;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 25px;
+            animation: shake 0.8s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .icon {
+            font-size: 28px;
+        }
+
+        .special-rule {
+            background: linear-gradient(145deg, rgba(255, 20, 147, 0.2), rgba(255, 105, 180, 0.2));
+            border: 2px solid #ff1493;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #ff69b4;
+        }
+
+        .no-hint-mode {
+            background: linear-gradient(145deg, rgba(100, 100, 100, 0.2), rgba(50, 50, 50, 0.2));
+            border: 2px solid #666;
+            color: #aaa;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(0, 255, 157, 0.2);
+            border-radius: 20px;
+            margin-left: 15px;
+            font-size: 14px;
+            border: 1px solid rgba(0, 255, 157, 0.5);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00ff9d;
+            display: block;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .player-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #00ff9d, #00b8ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 auto 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.5);
+        }
+
+        .player-list {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .player-item {
+            text-align: center;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .player-item.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .player-item.current {
+            transform: scale(1.2);
+        }
+
+        .player-item.current .player-avatar {
+            box-shadow: 0 0 30px rgba(255, 65, 108, 0.8);
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+        }
+
+        @media (max-width: 768px) {
+            .screen {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .word-display {
+                font-size: 36px;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .handover-text {
+                font-size: 36px;
+            }
+            
+            .countdown {
+                font-size: 60px;
+            }
+            
+            .image-container {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .game-mode {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .difficulty-btn {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-btn.active {
+            border-color: #00ff9d;
+            background: rgba(0, 255, 157, 0.1);
+        }
+
+        .timer-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: #00ff9d;
+            border: 1px solid rgba(0, 255, 157, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Timer Display -->
+    <div class="timer-display" id="timerDisplay">⏱️ 00:00</div>
+
+    <!-- Setup Screen -->
+    <div id="setup" class="screen active">
+        <h1>🎮 WORD IMPOSTER GAME</h1>
+        
+        <div class="setup-options">
+            <div class="option-group">
+                <label>👥 PLAYER SETUP</label>
+                <div class="game-info">
+                    <div class="info-item">
+                        <span class="info-value" id="playersValue">6</span>
+                        <span class="info-label">Total Players</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-value" id="impostersValue">2</span>
+                        <span class="info-label">Imposters</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-value" id="crewmatesValue">4</span>
+                        <span class="info-label">Crewmates</span>
+                    </div>
+                </div>
+                <input type="range" id="players" min="4" max="20" value="6">
+                <div style="text-align: center; margin-top: 15px;">
+                    <span style="font-size: 18px;">Adjust players: </span>
+                    <button onclick="adjustPlayers(-1)" style="padding: 5px 15px; margin: 0 5px;">-</button>
+                    <span id="playersDisplay" style="font-size: 24px; margin: 0 10px;">6</span>
+                    <button onclick="adjustPlayers(1)" style="padding: 5px 15px; margin: 0 5px;">+</button>
+                </div>
+            </div>
+            
+            <div class="option-group">
+                <label>📁 CATEGORY SELECTION</label>
+                <select id="category">
+                    <!-- Categories will be populated by JavaScript -->
+                </select>
+                <div class="football2-notice" id="football2Notice" style="display: none;">
+                    ⚽ FOOTBALL 2 SPECIAL RULE: The LAST player is ALWAYS the Imposter!
+                </div>
+            </div>
+            
+            <div class="option-group">
+                <label>🎭 GAME MODES</label>
+                <div class="game-mode">
+                    <div class="mode-btn active" data-mode="classic">
+                        <span class="icon">🎯</span>
+                        <span>Classic</span>
+                        <small>Normal gameplay</small>
+                    </div>
+                    <div class="mode-btn" data-mode="nohint">
+                        <span class="icon">🚫</span>
+                        <span>No Hint</span>
+                        <small>Hardcore mode</small>
+                    </div>
+                    <div class="mode-btn" data-mode="troll">
+                        <span class="icon">🤪</span>
+                        <span>Troll</span>
+                        <small>Chaotic fun</small>
+                    </div>
+                    <div class="mode-btn" data-mode="timed">
+                        <span class="icon">⏱️</span>
+                        <span>Timed</span>
+                        <small>30s per turn</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="option-group">
+                <label>⚙️ ADDITIONAL SETTINGS</label>
+                <div class="difficulty-selector">
+                    <div class="difficulty-btn active" data-difficulty="easy">Easy</div>
+                    <div class="difficulty-btn" data-difficulty="normal">Normal</div>
+                    <div class="difficulty-btn" data-difficulty="hard">Hard</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <label>
+                        <input type="checkbox" id="soundEffects" checked>
+                        🔊 Enable sound effects
+                    </label>
+                    <br>
+                    <label>
+                        <input type="checkbox" id="animations" checked>
+                        🎬 Enable animations
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>🎮 HOW TO PLAY</h3>
+            <ul>
+                <li>🎯 Each player gets a secret word to describe</li>
+                <li>👿 Imposters get a different word and must bluff</li>
+                <li>🗣️ Describe without saying the actual word</li>
+                <li>🕵️ Vote out imposters after discussion</li>
+                <li>🏆 Crewmates win if imposters are voted out</li>
+                <li>🎪 Imposters win if they survive or kill all crewmates</li>
+            </ul>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn-primary" onclick="startGame()">🚀 START GAME</button>
+            <button class="btn-secondary" onclick="showTutorial()">📖 TUTORIAL</button>
+        </div>
+    </div>
+
+    <!-- Handover Screen -->
+    <div id="handover" class="screen">
+        <div class="handover-screen">
+            <h2>🔁 PASS THE DEVICE</h2>
+            <div class="handover-text" id="handoverText">Pass to Player 1</div>
+            <div class="countdown" id="countdown">5</div>
+            
+            <div class="player-list" id="playerList">
+                <!-- Player avatars will be generated here -->
+            </div>
+            
+            <div class="instructions">
+                <h3>📋 INSTRUCTIONS</h3>
+                <p>When you see your word, <strong>DO NOT say it out loud!</strong><br>
+                Describe it creatively without using the actual word.</p>
+                <p><em>Current category: <span id="currentCategory">Soccer Players</span></em></p>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn-primary" onclick="showReveal()">👀 SHOW MY WORD</button>
+                <button class="btn-secondary" onclick="resetGame()">🔄 RESET GAME</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reveal Screen -->
+    <div id="reveal" class="screen">
+        <div class="reveal-content">
+            <div class="player-title" id="playerTitle">🎮 PLAYER 1</div>
+            
+            <div class="role-badge crewmate" id="roleBadge">CREWMATE</div>
+            
+            <div class="image-container">
+                <div id="noImage" class="no-image">
+                    <span class="icon">🖼️</span>
+                    No Image Available
+                </div>
+                <img id="wordImage" alt="" style="display: none;">
+            </div>
+            
+            <div class="word-display" id="wordDisplay">WORD HERE</div>
+            
+            <div class="hint-box">
+                <h3><span class="icon">💡</span> YOUR MISSION</h3>
+                <div id="hintText">Do NOT say the word out loud! Describe it creatively.</div>
+                <div id="imposterHint" class="imposter-hint" style="display: none;">
+                    <h3><span class="icon">👿</span> IMPOSTER ALERT!</h3>
+                    <div id="trollHint">You have a DIFFERENT word. Act natural!</div>
+                </div>
+                <div id="noHintMessage" class="imposter-hint no-hint-mode" style="display: none;">
+                    <h3><span class="icon">🚫</span> NO HINT MODE</h3>
+                    <div>You are the IMPOSTER! You get NO information about the real word. Good luck!</div>
+                </div>
+                <div id="football2Rule" class="special-rule" style="display: none;">
+                    <h3><span class="icon">⚽</span> FOOTBALL 2 SPECIAL RULE</h3>
+                    <div>As the LAST player, you are the IMPOSTER! No extra information given.</div>
+                </div>
+                <div id="timedModeInfo" style="margin-top: 15px; padding: 10px; background: rgba(0, 184, 255, 0.1); border-radius: 8px; display: none;">
+                    <strong>⏱️ TIMED MODE:</strong> You have 30 seconds to give clues!
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h3><span class="icon">⚡</span> QUICK TIPS</h3>
+                <ul>
+                    <li>🎭 Use metaphors and analogies</li>
+                    <li>🎯 Describe characteristics, not the name</li>
+                    <li>🤔 Watch for suspicious behavior</li>
+                    <li>🗳️ Vote carefully during discussion</li>
+                </ul>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn-primary" onclick="nextPlayer()">➡️ NEXT PLAYER</button>
+                <button class="btn-secondary" onclick="resetGame()">🔄 RESET GAME</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tutorial Screen -->
+    <div id="tutorial" class="screen">
+        <div class="reveal-content">
+            <h2>📖 GAME TUTORIAL</h2>
+            <div class="instructions">
+                <h3>🎯 OBJECTIVE</h3>
+                <p>Crewmates must identify and vote out all Imposters. Imposters must blend in and avoid detection.</p>
+                
+                <h3>🔄 GAME FLOW</h3>
+                <ol style="padding-left: 30px;">
+                    <li><strong>Setup:</strong> Choose players, category, and game mode</li>
+                    <li><strong>Reveal:</strong> Each player secretly sees their word and role</li>
+                    <li><strong>Discussion:</strong> Players describe their words without saying them</li>
+                    <li><strong>Voting:</strong> Vote for who you think is an Imposter</li>
+                    <li><strong>Resolution:</strong> Reveal roles and continue until game ends</li>
+                </ol>
+                
+                <h3>🎭 ROLES</h3>
+                <ul style="padding-left: 30px;">
+                    <li><strong>Crewmate:</strong> Has the secret word. Must describe it without saying it.</li>
+                    <li><strong>Imposter:</strong> Has a different word. Must bluff and blend in.</li>
+                </ul>
+                
+                <h3>⚙️ GAME MODES</h3>
+                <ul style="padding-left: 30px;">
+                    <li><strong>Classic:</strong> Normal gameplay with hints</li>
+                    <li><strong>No Hint:</strong> Imposters get zero information</li>
+                    <li><strong>Troll:</strong> Chaotic gameplay with funny twists</li>
+                    <li><strong>Timed:</strong> 30-second turns for fast gameplay</li>
+                </ul>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn-primary" onclick="showScreen('setup')">🏠 BACK TO MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Game data with working image URLs using reliable sources
+            const categories = {
+                "Soccer Players": {
+                    words: [
+                        "Lionel Messi", "Cristiano Ronaldo", "Neymar Jr", "Kylian Mbappe", "Erling Haaland",
+                        "Kevin De Bruyne", "Mohamed Salah", "Luka Modric", "Karim Benzema", "Robert Lewandowski",
+                        "Harry Kane", "Jude Bellingham", "Vinicius Junior", "Rodri", "Bernardo Silva",
+                        "Antoine Griezmann", "Paulo Dybala", "Son Heung-min", "Sadio Mane", "Riyad Mahrez",
+                        "Virgil van Dijk", "Trent Alexander-Arnold", "Phil Foden", "Bukayo Saka", "Marcus Rashford",
+                        "Bruno Fernandes", "Casemiro", "Pedri", "Gavi", "Ansu Fati",
+                        "Joao Felix", "Federico Valverde", "Dusan Vlahovic", "Victor Osimhen", "Khvicha Kvaratskhelia",
+                        "Jamal Musiala", "Florian Wirtz", "Jude Bellingham", "Alphonso Davies", "Achraf Hakimi",
+                        "Ederson", "Alisson Becker", "Thibaut Courtois", "Manuel Neuer", "Jan Oblak",
+                        "Gianluigi Donnarumma", "Mike Maignan", "David de Gea", "Emiliano Martinez", "Jordan Pickford"
+                    ],
+                    images: Array(50).fill('').map((_, i) => 
+                        `https://source.unsplash.com/featured/400x400/?soccer+player+${i+1}`
+                    )
+                },
+
+                "Football 2": {
+                    words: [
+                        "Panav Singh 711"
+                    ],
+                    images: [] // No images for this category
+                },
+
+                "Famous Football Clubs": {
+                    words: [
+                        "Real Madrid GOAT", "FC Barcelona", "Manchester United", "Manchester City", "Liverpool FC",
+                        "Arsenal FC", "Chelsea FC", "Bayern Munich", "Paris Saint-Germain", "Juventus",
+                        "AC Milan", "Inter Milan", "Tottenham Hotspur", "Atletico Madrid", "Borussia Dortmund",
+                        "Ajax Amsterdam", "Benfica", "Porto", "Celtic FC", "Rangers FC",
+                        "Napoli", "Roma", "Lazio", "Fiorentina", "Sevilla",
+                        "Valencia", "Villarreal", "Athletic Bilbao", "Real Sociedad", "Real Betis",
+                        "Leicester City", "West Ham United", "Newcastle United", "Aston Villa", "Everton",
+                        "Bayer Leverkusen", "RB Leipzig", "Eintracht Frankfurt", "Borussia Monchengladbach", "Wolfsburg",
+                        "Lyon", "Marseille", "Monaco", "Lille", "Nice",
+                        "Galatasaray", "Fenerbahce", "Besiktas", "Al Hilal", "Al Nassr"
+                    ],
+                    images: Array(50).fill('').map((_, i) => 
+                        `https://source.unsplash.com/featured/400x400/?football+stadium+${i+1}`
+                    )
+                },
+
+                "Clash Royale Cards": {
+                    words: [
+                        "Knight", "Archers", "Goblins", "Giant", "PEKKA",
+                        "Wizard", "Musketeer", "Valkyrie", "Hog Rider", "Balloon",
+                        "Baby Dragon", "Mega Knight", "Electro Wizard", "Princess", "Ice Spirit",
+                        "Fire Spirit", "Heal Spirit", "Elixir Golem", "Battle Healer", "Royal Giant",
+                        "Elite Barbarians", "Royal Recruits", "Three Musketeers", "Dark Prince", "Prince",
+                        "Bandit", "Royal Ghost", "Magic Archer", "Lumberjack", "Inferno Dragon",
+                        "Sparky", "Golem", "Lava Hound", "Night Witch", "Mother Witch",
+                        "Fisherman", "Cannon Cart", "Flying Machine", "Wall Breakers", "Bomber",
+                        "Ice Wizard", "Electro Dragon", "Hunter", "Executioner", "Tornado",
+                        "Rocket", "Fireball", "Lightning", "Freeze", "Poison"
+                    ],
+                    images: Array(50).fill('').map((_, i) => 
+                        `https://source.unsplash.com/featured/400x400/?fantasy+character+${i+1}`
+                    )
+                },
+
+                "Famous Cities": {
+                    words: [
+                        "New York", "Tokyo", "London", "Paris", "Dubai",
+                        "Singapore", "Bangkok", "Hong Kong", "Barcelona", "Rome",
+                        "Istanbul", "Moscow", "Sydney", "Toronto", "Los Angeles",
+                        "Chicago", "Miami", "Las Vegas", "San Francisco", "Seattle",
+                        "Berlin", "Amsterdam", "Vienna", "Prague", "Budapest",
+                        "Athens", "Lisbon", "Madrid", "Milan", "Venice",
+                        "Rio de Janeiro", "São Paulo", "Buenos Aires", "Mexico City", "Lima",
+                        "Cairo", "Marrakesh", "Cape Town", "Nairobi", "Mumbai",
+                        "Delhi", "Shanghai", "Beijing", "Seoul", "Osaka",
+                        "Bali", "Phuket", "Hanoi", "Ho Chi Minh City", "Manila"
+                    ],
+                    images: Array(50).fill('').map((_, i) => 
+                        `https://source.unsplash.com/featured/400x400/?city+${i+1}`
+                    )
+                },
+
+                "Famous Countries": {
+                    words: [
+                        "USA", "Canada", "Mexico", "Brazil", "Argentina",
+                        "UK", "France", "Germany", "Italy", "Spain",
+                        "Portugal", "Netherlands", "Belgium", "Switzerland", "Austria",
+                        "Sweden", "Norway", "Denmark", "Finland", "Iceland",
+                        "Russia", "China", "Japan", "South Korea", "India",
+                        "Australia", "New Zealand", "South Africa", "Egypt", "Morocco",
+                        "Turkey", "Greece", "Poland", "Czech Republic", "Hungary",
+                        "Romania", "Bulgaria", "Croatia", "Serbia", "Ukraine",
+                        "Israel", "Saudi Arabia", "UAE", "Qatar", "Thailand",
+                        "Vietnam", "Philippines", "Indonesia", "Malaysia", "Singapore"
+                    ],
+                    images: Array(50).fill('').map((_, i) => 
+                        `https://source.unsplash.com/featured/400x400/?flag+${i+1}`
+                    )
+                },
+
+                "Movies & TV Shows": {
+                    words: [
+                        "Harry Potter", "Star Wars", "Marvel", "DC Comics", "The Matrix",
+                        "Lord of the Rings", "Game of Thrones", "Breaking Bad", "Stranger Things", "Friends",
+                        "The Office", "Rick and Morty", "The Simpsons", "South Park", "Family Guy",
+                        "Avatar", "Titanic", "Jurassic Park", "The Godfather", "Pulp Fiction",
+                        "Inception", "Interstellar", "The Dark Knight", "Forrest Gump", "Fight Club",
+                        "The Avengers", "Spider-Man", "Batman", "Superman", "Wonder Woman",
+                        "James Bond", "Mission Impossible", "Fast and Furious", "John Wick", "Terminator",
+                        "Toy Story", "Finding Nemo", "The Lion King", "Frozen", "Shrek",
+                        "Doctor Who", "Sherlock", "Money Heist", "The Crown", "The Witcher",
+                        "Naruto", "Dragon Ball", "One Piece", "Attack on Titan", "Demon Slayer"
+                    ],
+                    images: Array(50).fill('').map((_, i) => 
+                        `https://source.unsplash.com/featured/400x400/?movie+${i+1}`
+                    )
+                },
+
+                "Animals": {
+                    words: [
+                        "Lion", "Tiger", "Elephant", "Giraffe", "Zebra",
+                        "Panda", "Kangaroo", "Koala", "Penguin", "Dolphin",
+                        "Whale", "Shark", "Eagle", "Owl", "Peacock",
+                        "Butterfly", "Bee", "Ant", "Spider", "Scorpion",
+                        "Crocodile", "Alligator", "Snake", "Lizard", "Turtle",
+                        "Frog", "Monkey", "Gorilla", "Chimpanzee", "Orangutan",
+                        "Wolf", "Fox", "Bear", "Polar Bear", "Panda Bear",
+                        "Hippopotamus", "Rhinoceros", "Cheetah", "Leopard", "Jaguar",
+                        "Camel", "Horse", "Cow", "Sheep", "Goat",
+                        "Pig", "Chicken", "Duck", "Parrot", "Ostrich"
+                    ],
+                    images: Array(50).fill('').map((_, i) => 
+                        `https://source.unsplash.com/featured/400x400/?animal+${i+1}`
+                    )
+                },
+
+                "Food & Drinks": {
+                    words: [
+                        "Pizza", "Burger", "Sushi", "Pasta", "Tacos",
+                        "Steak", "Salad", "Sandwich", "Ice Cream", "Chocolate",
+                        "Cake", "Donut", "Cookie", "Coffee", "Tea",
+                        "Juice", "Smoothie", "Milkshake", "Beer", "Wine",
+                        "Cheese", "Bread", "Rice", "Noodles", "Soup",
+                        "Curry", "Kebab", "Fried Chicken", "Fish and Chips", "Hot Dog",
+                        "Pancakes", "Waffles", "French Toast", "Omelette", "Bacon",
+                        "Apple", "Banana", "Orange", "Strawberry", "Grapes",
+                        "Watermelon", "Pineapple", "Mango", "Avocado", "Carrot",
+                        "Potato", "Tomato", "Onion", "Garlic", "Pepper"
+                    ],
+                    images: Array(50).fill('').map((_, i) => 
+                        `https://source.unsplash.com/featured/400x400/?food+${i+1}`
+                    )
+                },
+
+                "Superheroes": {
+                    words: [
+                        "Superman", "Batman AURA", "Spider-Man", "Iron Man GOAT", "Captain America",
+                        "Wonder Woman", "Thor", "Hulk", "Black Widow", "Hawkeye",
+                        "Flash", "Green Lantern", "Aquaman", "Wolverine", "Deadpool",
+                        "Captain Marvel", "Black Panther", "Doctor Strange", "Ant-Man", "Wasp",
+                        "Supergirl", "Batgirl", "Robin", "Nightwing", "Green Arrow",
+                        "Cyborg", "Raven", "Starfire", "Beast Boy", "Shazam",
+                        "Black Canary", "Zatanna", "Constantine", "Swamp Thing", "Hellboy",
+                        "Witchblade", "Spawn", "Invincible", "Omni-Man", "Atom Eve",
+                        "Static Shock", "Icon", "Rocket", "Mister Terrific", "Blue Beetle",
+                        "Booster Gold", "Plastic Man", "Elongated Man", "Animal Man", "Swamp Thing"
+                    ],
+                    images: Array(50).fill('').map((_, i) => 
+                        `https://source.unsplash.com/featured/400x400/?superhero+${i+1}`
+                    )
+                }
+            };
+
+            // Game state
+            let totalPlayers = 6;
+            let roles = [];
+            let currentWord = "";
+            let currentWordIndex = 0;
+            let fakeWord = "";
+            let fakeWordIndex = -1;
+            let currentPlayer = 1;
+            let gameMode = "classic";
+            let countdownInterval;
+            let isFootball2Category = false;
+            let lastPlayerImposter = false;
+            let gameStartTime = 0;
+            let timerInterval;
+            let playerAvatars = [];
+
+            // DOM Elements
+            const playersInput = document.getElementById("players");
+            const playersDisplay = document.getElementById("playersDisplay");
+            const playersValue = document.getElementById("playersValue");
+            const impostersValue = document.getElementById("impostersValue");
+            const crewmatesValue = document.getElementById("crewmatesValue");
+            const categorySelect = document.getElementById("category");
+            const football2Notice = document.getElementById("football2Notice");
+            const handoverText = document.getElementById("handoverText");
+            const playerTitle = document.getElementById("playerTitle");
+            const roleBadge = document.getElementById("roleBadge");
+            const wordDisplay = document.getElementById("wordDisplay");
+            const wordImage = document.getElementById("wordImage");
+            const noImage = document.getElementById("noImage");
+            const hintText = document.getElementById("hintText");
+            const imposterHint = document.getElementById("imposterHint");
+            const noHintMessage = document.getElementById("noHintMessage");
+            const football2Rule = document.getElementById("football2Rule");
+            const timedModeInfo = document.getElementById("timedModeInfo");
+            const trollHint = document.getElementById("trollHint");
+            const countdownDisplay = document.getElementById("countdown");
+            const playerList = document.getElementById("playerList");
+            const timerDisplay = document.getElementById("timerDisplay");
+            const modeButtons = document.querySelectorAll(".mode-btn");
+            const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+            const currentCategory = document.getElementById("currentCategory");
+
+            // Initialize game
+            function initializeGame() {
+                // Populate categories dropdown
+                categorySelect.innerHTML = '';
+                Object.keys(categories).forEach(category => {
+                    const option = document.createElement("option");
+                    option.value = category;
+                    option.textContent = category;
+                    categorySelect.appendChild(option);
+                });
+
+                // Set default values
+                updatePlayerDisplay();
+                updateCrewmateCount();
+
+                // Setup event listeners
+                playersInput.addEventListener("input", function() {
+                    totalPlayers = parseInt(this.value);
+                    updatePlayerDisplay();
+                    updateCrewmateCount();
+                    updatePlayerList();
+                });
+
+                categorySelect.addEventListener("change", function() {
+                    isFootball2Category = (this.value === "Football 2");
+                    if (isFootball2Category) {
+                        football2Notice.style.display = "block";
+                    } else {
+                        football2Notice.style.display = "none";
+                    }
+                    currentCategory.textContent = this.value;
+                });
+
+                // Setup game mode buttons
+                modeButtons.forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        modeButtons.forEach(b => b.classList.remove("active"));
+                        btn.classList.add("active");
+                        gameMode = btn.dataset.mode;
+                        
+                        // Show/hide timed mode info
+                        if (gameMode === "timed") {
+                            timedModeInfo.style.display = "block";
+                        } else {
+                            timedModeInfo.style.display = "none";
+                        }
+                    });
+                });
+
+                // Setup difficulty buttons
+                difficultyButtons.forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        difficultyButtons.forEach(b => b.classList.remove("active"));
+                        btn.classList.add("active");
+                    });
+                });
+
+                // Set initial category
+                currentCategory.textContent = categorySelect.value;
+            }
+
+            // Update player count display
+            function updatePlayerDisplay() {
+                playersDisplay.textContent = totalPlayers;
+                playersValue.textContent = totalPlayers;
+                playersInput.value = totalPlayers;
+            }
+
+            // Update crewmate count
+            function updateCrewmateCount() {
+                const imposters = isFootball2Category ? 1 : Math.max(1, Math.floor(totalPlayers / 3));
+                impostersValue.textContent = imposters;
+                crewmatesValue.textContent = totalPlayers - imposters;
+            }
+
+            // Adjust players with buttons
+            window.adjustPlayers = function(amount) {
+                totalPlayers = Math.max(4, Math.min(20, totalPlayers + amount));
+                updatePlayerDisplay();
+                updateCrewmateCount();
+                updatePlayerList();
+            };
+
+            // Update player list display
+            function updatePlayerList() {
+                playerList.innerHTML = '';
+                for (let i = 1; i <= totalPlayers; i++) {
+                    const playerDiv = document.createElement("div");
+                    playerDiv.className = "player-item" + (i === 1 ? " active current" : "");
+                    playerDiv.innerHTML = `
+                        <div class="player-avatar">${i}</div>
+                        <div>Player ${i}</div>
+                    `;
+                    playerList.appendChild(playerDiv);
+                }
+            }
+
+            // SCREEN MANAGEMENT
+            window.showScreen = function(screenId) {
+                document.querySelectorAll(".screen").forEach(screen => {
+                    screen.classList.remove("active");
+                });
+                document.getElementById(screenId).classList.add("active");
+                
+                if (screenId === "handover") {
+                    updatePlayerList();
+                }
+            };
+
+            // Show tutorial
+            window.showTutorial = function() {
+                showScreen("tutorial");
+            };
+
+            // START GAME
+            window.startGame = function() {
+                totalPlayers = parseInt(playersInput.value);
+                let numImposters = isFootball2Category ? 1 : Math.max(1, Math.floor(totalPlayers / 3));
+                const categoryName = categorySelect.value;
+                const category = categories[categoryName];
+                
+                // Set Football 2 flag
+                isFootball2Category = (categoryName === "Football 2");
+                lastPlayerImposter = false;
+
+                // Validation
+                if (totalPlayers < 4) {
+                    alert("Need at least 4 players!");
+                    return;
+                }
+
+                // Select random real word
+                currentWordIndex = Math.floor(Math.random() * category.words.length);
+                currentWord = category.words[currentWordIndex];
+                
+                // Generate different fake word for imposters
+                do {
+                    fakeWordIndex = Math.floor(Math.random() * category.words.length);
+                    fakeWord = category.words[fakeWordIndex];
+                } while (fakeWord === currentWord);
+
+                // Assign roles based on category
+                roles = Array(totalPlayers).fill("Crewmate");
+                
+                if (isFootball2Category) {
+                    // Football 2: Last player is ALWAYS imposter
+                    roles[totalPlayers - 1] = "Imposter";
+                    lastPlayerImposter = true;
+                } else {
+                    // Regular role assignment
+                    let imposterIndices = [];
+                    
+                    // Ensure imposters are spread out
+                    for (let i = 0; i < numImposters; i++) {
+                        let index;
+                        do {
+                            index = Math.floor(Math.random() * totalPlayers);
+                        } while (imposterIndices.includes(index));
+                        imposterIndices.push(index);
+                        roles[index] = "Imposter";
+                    }
+                }
+
+                currentPlayer = 1;
+                gameStartTime = Date.now();
+                startTimer();
+                showScreen("handover");
+                updateHandoverText();
+                startCountdown();
+                updatePlayerAvatars();
+            };
+
+            // Start game timer
+            function startTimer() {
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    const elapsed = Date.now() - gameStartTime;
+                    const minutes = Math.floor(elapsed / 60000);
+                    const seconds = Math.floor((elapsed % 60000) / 1000);
+                    timerDisplay.textContent = `⏱️ ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            // Update player avatars
+            function updatePlayerAvatars() {
+                const items = document.querySelectorAll('.player-item');
+                items.forEach((item, index) => {
+                    const playerNum = index + 1;
+                    item.className = "player-item";
+                    if (playerNum === currentPlayer) {
+                        item.classList.add('current');
+                    }
+                    if (playerNum <= currentPlayer) {
+                        item.classList.add('active');
+                    }
+                });
+            }
+
+            // UPDATE HANDOVER TEXT
+            function updateHandoverText() {
+                handoverText.textContent = `📱 PASS TO PLAYER ${currentPlayer}`;
+            }
+
+            // COUNTDOWN FUNCTIONALITY
+            function startCountdown() {
+                let count = 5;
+                countdownDisplay.textContent = count;
+                countdownDisplay.style.color = '#00ff9d';
+                
+                clearInterval(countdownInterval);
+                countdownInterval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdownDisplay.textContent = count;
+                        if (count <= 3) {
+                            countdownDisplay.style.color = '#ff6b6b';
+                            countdownDisplay.style.animation = 'none';
+                            void countdownDisplay.offsetWidth;
+                            countdownDisplay.style.animation = '';
+                        }
+                    } else {
+                        clearInterval(countdownInterval);
+                        countdownDisplay.textContent = "GO!";
+                        countdownDisplay.style.color = '#00ff9d';
+                        setTimeout(() => {
+                            showReveal();
+                        }, 1000);
+                    }
+                }, 1000);
+            }
+
+            // GET IMPOSTER HINT
+            function getImposterHint() {
+                const hints = [
+                    "🤫 You have a DIFFERENT word! Try to blend in and figure out what others are describing.",
+                    "🎭 Act natural! Pretend you know the real word by giving vague clues.",
+                    "🕵️ You're undercover! Watch others closely and mimic their clues.",
+                    "🤔 Pay attention to what others say. Try to guess the real word!",
+                    "🎯 Your mission: Figure out the word without revealing you're an imposter!"
+                ];
+                return hints[Math.floor(Math.random() * hints.length)];
+            }
+
+            // GET TROLL HINT
+            function getTrollHint() {
+                const trollHints = [
+                    "🤪 TROLL MODE: Be EXTRA sneaky! Drop confusing hints!",
+                    "😈 TROLL TIME: Make ridiculous clues that almost give it away!",
+                    "🎪 TROLL MODE: Act SUPER confident about your wrong word!",
+                    "🤹 TROLL: Give clues that could fit both words!",
+                    "🎭 TROLL MODE: Pretend to be terrible at giving clues on purpose!"
+                ];
+                return trollHints[Math.floor(Math.random() * trollHints.length)];
+            }
+
+            // GET CREWMATE HINT
+            function getCrewmateHint() {
+                const hints = [
+                    "💡 Describe your word without saying it! Use associations and characteristics.",
+                    "🎯 Be creative! Use metaphors, locations, related items, or sounds.",
+                    "🗣️ Give good clues but don't make it too obvious!",
+                    "👀 Watch for players who seem unsure or give vague clues.",
+                    "🤝 Help other crewmates by listening to their clues carefully."
+                ];
+                return hints[Math.floor(Math.random() * hints.length)];
+            }
+
+            // SHOW REVEAL SCREEN
+            window.showReveal = function() {
+                clearInterval(countdownInterval);
+                const role = roles[currentPlayer - 1];
+                const category = categories[categorySelect.value];
+                const isImposter = role === "Imposter";
+                const isLastPlayer = (currentPlayer === totalPlayers);
+                const wordToShow = isImposter ? fakeWord : currentWord;
+                const wordIndex = isImposter ? fakeWordIndex : currentWordIndex;
+
+                // Update UI
+                playerTitle.textContent = `🎮 PLAYER ${currentPlayer}`;
+                roleBadge.textContent = role.toUpperCase();
+                roleBadge.className = `role-badge ${isImposter ? 'imposter' : 'crewmate'}`;
+                wordDisplay.textContent = wordToShow.toUpperCase();
+
+                // Handle image display
+                if (category.images && category.images.length > 0) {
+                    wordImage.src = category.images[wordIndex % category.images.length];
+                    wordImage.alt = wordToShow;
+                    wordImage.style.display = "block";
+                    noImage.style.display = "none";
+                    
+                    // Add error handling for images
+                    wordImage.onerror = function() {
+                        this.style.display = "none";
+                        noImage.style.display = "flex";
+                        noImage.textContent = "🖼️ No Image Available";
+                    };
+                } else {
+                    wordImage.style.display = "none";
+                    noImage.style.display = "flex";
+                }
+
+                // Update hints based on game mode and role
+                hintText.innerHTML = `🎯 <strong>YOUR WORD:</strong> "${wordToShow}"`;
+                
+                // Hide all hint sections first
+                imposterHint.style.display = "none";
+                noHintMessage.style.display = "none";
+                football2Rule.style.display = "none";
+                timedModeInfo.style.display = gameMode === "timed" ? "block" : "none";
+                
+                if (isImposter) {
+                    // Check if this is the last player in Football 2 category
+                    const isFootball2LastPlayer = isFootball2Category && isLastPlayer;
+                    
+                    if (isFootball2LastPlayer) {
+                        // Show Football 2 special rule
+                        football2Rule.style.display = "block";
+                        hintText.innerHTML += "<br><br>⚽ You are the designated imposter because you're the LAST player!";
+                    } else if (gameMode === "nohint") {
+                        // No Hint mode - show minimal information
+                        noHintMessage.style.display = "block";
+                        hintText.innerHTML += "<br><br>🚫 You get NO hints about the real word. Good luck!";
+                    } else if (gameMode === "troll") {
+                        // Troll mode
+                        imposterHint.style.display = "block";
+                        trollHint.innerHTML = getTrollHint();
+                    } else {
+                        // Classic mode
+                        imposterHint.style.display = "block";
+                        trollHint.innerHTML = getImposterHint();
+                    }
+                } else {
+                    // Crewmate gets normal hint
+                    hintText.innerHTML += `<br><br>${getCrewmateHint()}`;
+                }
+
+                showScreen("reveal");
+            };
+
+            // NEXT PLAYER FUNCTION
+            window.nextPlayer = function() {
+                currentPlayer++;
+                updatePlayerAvatars();
+                
+                if (currentPlayer > totalPlayers) {
+                    // End game, show results
+                    clearInterval(timerInterval);
+                    showScreen("setup");
+                    
+                    // Special message for Football 2
+                    if (isFootball2Category) {
+                        alert(`🎮 GAME COMPLETE!\n\nPlayer ${totalPlayers} was the IMPOSTER (Football 2 rule)!\n\nTime to discuss and vote!`);
+                    } else {
+                        const imposters = roles.filter(r => r === "Imposter").length;
+                        alert(`🎮 GAME COMPLETE!\n\nThere ${imposters === 1 ? 'was' : 'were'} ${imposters} imposters among you!\n\nTime to discuss and vote them out!`);
+                    }
+                } else {
+                    showScreen("handover");
+                    updateHandoverText();
+                    startCountdown();
+                }
+            };
+
+            // RESET GAME FUNCTION
+            window.resetGame = function() {
+                if (confirm("🔄 Are you sure you want to reset the game?")) {
+                    clearInterval(countdownInterval);
+                    clearInterval(timerInterval);
+                    currentPlayer = 1;
+                    showScreen("setup");
+                }
+            };
+
+            // Keyboard shortcuts for easier navigation
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    resetGame();
+                }
+                if (e.key === " " || e.key === "Enter") {
+                    if (document.getElementById("handover").classList.contains("active")) {
+                        showReveal();
+                    }
+                }
+                if (e.key === "n" && document.getElementById("reveal").classList.contains("active")) {
+                    nextPlayer();
+                }
+                if (e.key === "s" && document.getElementById("setup").classList.contains("active")) {
+                    startGame();
+                }
+                if (e.key === "t" && document.getElementById("setup").classList.contains("active")) {
+                    showTutorial();
+                }
+            });
+
+            // Initialize the game
+            initializeGame();
+        });
+    </script>
+</body>
+</html>
